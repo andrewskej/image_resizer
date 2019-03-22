@@ -7,13 +7,16 @@
             .overall {border:solid 1px lightgray; padding:15px; width:300px; margin-top:80px; margin-left:50%; transform:translateX(-50%);}
             .original, .resized {text-align:center; border:solid 1px lightgray; padding:15px; margin:10px; width:250px;} 
             .previews, .resizePreset {display:flex;}
-            .previewFrame, .resizedPreviewFrame { border:solid 1px black; width:250px; height:300px;}
+            .previewFrame, .resizedPreviewFrame {border:solid 1px black; width:250px; height:250px; display:flex; justify-content:center; align-items:center; }
+            .previewFrame img, .resizedPreviewFrame img {margin-left:auto; margin-right:auto; max-width:250px; max-height:250px; }
+            .file{margin-left:10px;}
             .fileInfo, .resizedfileInfo {padding:5%; border:solid 1px lightgray; width:225px; display:none;}
-            .resizedPreviewFrame {border:solid 1px goldenrod;}
-            .widthheight {display:flex;}
-            .resize_width input, .resize_height input {width:60px; text-align:center;}
+            .resizedPreviewFrame {border:solid 1px orangered;}
+            .widthheight, .nameType {display:flex; margin-bottom:15px; justify-content:space-around;}
+            .widthheight input {width:60px; text-align:center;}
+            .nameType input {width:180px; text-align:center;}
             .resize button {width:80px; height:30px; margin-top:10px; border-radius:9; background:azure;}
-            .resize, .clearFile {border:solid 1px lightgray; padding:15px; margin:10px; width:200px; height:120px;} 
+            .resize, .clearFile {border:solid 1px lightgray; padding:15px; margin:10px; width:200px; height:180px;} 
             .resized, .clearFile {display:none;}
             .clearFile button {height:50px; margin-top:15px;}
         </style>
@@ -26,8 +29,8 @@
             <section class="previews">
                 <section class="original">
                     <div class="previewFrame">
-                        <a  href="#" onClick="displayImg(this)">
-                            <img src="" class="preview" width="250" height="300" alt="upload an image">
+                        <a href="#" onClick="displayImg(this)">
+                            <img src="//localhost:3000/uploads/default/pic_placeholder.png" class="preview" alt="upload an image" >
                         </a>
                     </div>
                     <div class="fileInfo">
@@ -38,16 +41,28 @@
                         <div class="filetype"></div>
                     </div>
                     <div class="resize">
+                        <div class="nameType">
+                            <input type="text" class="resize_name" name="re_name" placeholder="filename">
+                            <!-- <select class="resize_type" name="re_type">
+                                <option>JPEG</option>
+                                <option>PNG</option>
+                                <option>WebP</option>
+                                <option>GIF</option>
+                                <option>SVG</option>
+                                <option>TIFF</option>
+                            </select> -->
+                        </div>
                         <div class="widthHeight">
                             <div class="resize_width">
-                                <span>width</span>
+                                <span>Width</span>
                                 <input type="number" name="re_width" required>px
                             </div>
                             <div class="resize_height">
-                                <span>height</span>
+                                <span>Height</span>
                                 <input type="number" name="re_height" required>px
                             </div>
                         </div>
+ 
                         <div class="resizePreset">
                             <button onclick="resizePresetCal('0.5')">50%</button>
                             <button onclick="resizePresetCal('0.25')">25%</button>
@@ -55,12 +70,15 @@
                         </div>
                         <button class="upload" onclick="uploadFile()">upload</button>
                         <button class="re" onclick="resize()">resize</button>
+                        <span class="uploadMsg"></span>
                     </div>
                 </section>
 
                 <section class="resized">
                     <div class="resizedPreviewFrame">
-                        <img src="" class="resizedImgPreview">
+                        <a target="_blank" href="">
+                            <img src="" maxwidth="250" maxheight="250" class="resizedImgPreview">
+                        </a>
                     </div>
                     <div class="resizedfileInfo">
                         <span><b>resized file Info</b></span>
@@ -79,7 +97,7 @@
         </section>
 
         <script>
-
+            var globalPath = '//localhost:3000/'
 
             function resize(){
                 var rewidth = document.getElementsByName('re_width')[0].value
@@ -99,8 +117,8 @@
                     var file    = document.querySelector('input[type=file]').files[0];
                     var formData = new FormData()
                     formData.append('file', file)
-                    result = await axios.post('//localhost:3000/upload', formData)
-                    console.log(result.data.result)
+                    result = await axios.post(globalPath+'upload', formData)
+                    document.getElementsByClassName('uploadMsg')[0].innerText = result.data.result
                 }
             }
 
@@ -126,6 +144,8 @@
                 setTimeout(()=>{
                     getSize()
                     $('.fileInfo').show()
+                    document.getElementsByClassName('resize_name')[0].placeholder = 'resized_' + filename
+                    // document.getElementsByClassName('resize_type')[0].value = filetype.split('/')[1]
                 },100)
             }
 
@@ -147,22 +167,32 @@
                 document.getElementsByName('re_height')[0].value = reheight
             }
 
-            
+
             async function resizeFile(args){
                 var rewidth = document.getElementsByName('re_width')[0].value
                 var reheight = document.getElementsByName('re_height')[0].value
+                var rename = document.getElementsByName('re_name')[0].value || document.getElementsByName('re_name')[0].placeholder
+                // var retype = document.getElementsByName('re_type')[0].value
                 var file    = document.querySelector('input[type=file]').files[0];
                 var formData = new FormData()
                     formData.append('file', file)
                     formData.append('rewidth', rewidth)
                     formData.append('reheight', reheight)
-                var result = await axios.post('//localhost:3000/resize', formData)
-                var workResult = result.data.data
-                var newPath = result.data.path
-                var newName = result.data.name
+                    formData.append('rename', rename)
+                    //wip
+                    // formData.append('retype', retype)  
+
+                var result = await axios.post(globalPath+'resize', formData)
+                if(result.status == 200){
+                    document.getElementsByClassName('uploadMsg')[0].innerText = 'resize complete'
+                }
+                var workResult = result.data.result.data
+                var newPath = result.data.result.path
+                var newName = result.data.result.name
                 
                 setTimeout(()=>{
-                    $('.resizedImgPreview')[0].src = '//localhost:3000/' + newPath
+                    $('.resizedImgPreview')[0].src = globalPath + newPath
+                    $('.resizedPreviewFrame a')[0].href= globalPath + newPath
                     document.querySelector('.resizedfilename').innerText = newName
                     document.querySelector('.resizedfilesize').innerText = workResult.width + ' x ' + workResult.height
                     document.querySelector('.resizedfiletype').innerText = workResult.format
@@ -184,8 +214,8 @@
             
             async function clearFileOnServer(){
                 const path = $('.resizedImgPreview')[0].src
-                const filePath = path.split('http://localhost:3000/')[1]
-                const result = await axios.post('//localhost:3000/clearFile',{filePath:filePath})
+                const filePath = path.split('http:' + globalPath)[1]
+                const result = await axios.post(globalPath+'clearFile',{filePath:filePath})
                 if(result.data.result){
                     document.getElementsByClassName('deleteMsg')[0].textContent = result.data.result
                     $('.resizedImgPreview')[0].src = ''

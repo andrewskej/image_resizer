@@ -33,9 +33,9 @@ function fileUpload(req,res){
 
 
 function fileResize(req,res){
-    const {rewidth, reheight} = req.body
+    const {rewidth, reheight, rename, retype} = req.body
     const {file} = req;
-    const resizedFileName = 'resized_'+file.originalname
+    const resizedFileName = rename
     const resizedFilePath = 'uploads/resized_'+file.filename
     let result = {}
     sharp(file.path)
@@ -50,11 +50,11 @@ function fileResize(req,res){
         //리사이징 후 서버에서 원본 파일 삭제
         deleteFile(file.path) 
 
-        res.send(result)
+        res.send({result})
     })
 }
 
-//명령시 로컬의 리사이즈 파일 삭제
+
 function deleteFile(filePath){
   console.log(`del...${filePath}`)
   const fs = require('fs')
@@ -65,6 +65,7 @@ function deleteFile(filePath){
 }
 
 
+//명령시 로컬의 리사이즈 파일 삭제
 function clearFile(req,res){
   const {filePath} = req.body
   deleteFile(filePath)
