@@ -1,0 +1,109 @@
+<html>
+    <head></head>
+    <body>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.min.js"></script>
+        <script src="http://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+        <style>
+            .fileInfo, .resizedfileInfo{padding:'5%'; border:solid 1px lightgray; width:250px; display:none;}
+        </style>
+        
+        
+        <section class="imageResizer">
+            <input type="file" onchange="previewFile()" class="file" name="file"/>
+        </section>
+        
+        <section class="info">
+            <img src="" height="250" class="preview" alt="image preview...">
+            <div class="fileInfo">
+                <span><b>file Info</b></span>
+                <div class="filename"></div>
+                <div class="filesize"></div>
+                <div class="originalsize"></div>
+                <div class="filetype"></div>
+            </div>
+        </section>
+
+        <section class="resize">
+            <div>
+                <span>width</span>
+                <input type="number" name="re_width">
+            </div>
+            <div>
+                <span>height</span>
+                <input type="number" name="re_height">
+            </div>
+            <button class="re" onclick="resizeFile()">resize</button>
+        </section>
+
+        <section class="resized">
+            <img src="" class="resizedImgPreview">
+            <div class="resizedfileInfo">
+                <span><b>resized - file Info</b></span>
+                <div class="resizedfilename"></div>
+                <div class="resizedfilesize"></div>
+                <div class="resizedsize"></div>
+                <div class="resizedfiletype"></div>
+            </div>
+        </section>
+
+
+        <script>
+            function previewFile() {
+                var preview = document.querySelector('.info img');
+                var file    = document.querySelector('input[type=file]').files[0];
+                var filename = file.name
+                var filesize = Math.ceil(file.size/1024) + 'kb'
+                var filetype = file.type
+                var reader  = new FileReader();
+                reader.onloadend = function () {
+                    preview.src = reader.result;
+                    document.querySelector('.filename').innerText = filename    
+                    document.querySelector('.filesize').innerText = filesize
+                    document.querySelector('.filetype').innerText = filetype
+                }
+                if(file){
+                    reader.readAsDataURL(file);
+                } else {
+                    preview.src = "";
+                }
+                setTimeout(()=>{
+                    getSize()
+                    $('.fileInfo').show()
+                },100)
+            }
+
+            function getSize(){
+                var preview = document.querySelector('.info img');
+                var oWidth = preview.naturalWidth
+                var oHeight = preview.naturalHeight
+                var originalsize = oWidth + ' x ' + oHeight
+                document.querySelector('.originalsize').innerText = originalsize
+            }
+
+            async function resizeFile(){
+                var rewidth = document.getElementsByName('re_width')[0].value
+                var reheight = document.getElementsByName('re_height')[0].value
+                var file    = document.querySelector('input[type=file]').files[0];
+                var formData = new FormData()
+                    formData.append('file', file)
+                    formData.append('rewidth', rewidth)
+                    formData.append('reheight', reheight)
+                var result = await axios.post('//localhost:3000/resize', formData)
+                var workResult = result.data.data
+                var newPath = result.data.path
+
+                setTimeout(()=>{
+                    $('.resizedImgPreview')[0].src = '//localhost:3000/' + newPath
+                    document.querySelector('.resizedfilesize').innerText = workResult.width + ' x ' + workResult.height
+                    document.querySelector('.resizedfiletype').innerText = workResult.format
+                    document.querySelector('.resizedsize').innerText = Math.ceil(workResult.size/1024) +'kb'
+                    $('.resizedfileInfo').show()
+                },100)
+            
+            }
+
+ 
+
+        </script>
+    </body>
+</html>
