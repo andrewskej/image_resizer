@@ -16,17 +16,26 @@ const upload = multer({
 
 
 router.get('/', initPage)
+router.post('/upload', upload.single('file'), fileUpload)
 router.post('/resize', upload.single('file'), fileResize)
+router.post('/clearFile', clearFile)
 
 
 function initPage(req,res){
     res.render('index.html');
 }
 
+function fileUpload(req,res){
+  console.log('upload')
+  const {file} = req;
+  res.send({result:'upload success'})
+}
+
 
 function fileResize(req,res){
     const {rewidth, reheight} = req.body
     const {file} = req;
+    const resizedFileName = 'resized_'+file.originalname
     const resizedFilePath = 'uploads/resized_'+file.filename
     let result = {}
     sharp(file.path)
@@ -35,12 +44,32 @@ function fileResize(req,res){
     .then((done)=> {
         console.log('resizing done')
         result.data = done
+        result.name = resizedFileName
         result.path = resizedFilePath
+        
+        //리사이징 후 서버에서 원본 파일 삭제
+        deleteFile(file.path) 
+
         res.send(result)
     })
 }
 
+//명령시 로컬의 리사이즈 파일 삭제
+function deleteFile(filePath){
+  console.log(`del...${filePath}`)
+  const fs = require('fs')
+  fs.unlink(filePath, (err, result)=> {
+    if(err) console.log(err)
+    return;
+  })
+}
 
+
+function clearFile(req,res){
+  const {filePath} = req.body
+  deleteFile(filePath)
+  res.send({result:'deleted'})
+}
 
 
 module.exports = router;

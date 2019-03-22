@@ -4,52 +4,109 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.18.0/axios.min.js"></script>
         <script src="http://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
         <style>
-            .fileInfo, .resizedfileInfo{padding:'5%'; border:solid 1px lightgray; width:250px; display:none;}
+            .overall {border:solid 1px lightgray; padding:15px; width:300px; margin-top:80px; margin-left:50%; transform:translateX(-50%);}
+            .original, .resized {text-align:center; border:solid 1px lightgray; padding:15px; margin:10px; width:250px;} 
+            .previews, .resizePreset {display:flex;}
+            .previewFrame, .resizedPreviewFrame { border:solid 1px black; width:250px; height:300px;}
+            .fileInfo, .resizedfileInfo {padding:5%; border:solid 1px lightgray; width:225px; display:none;}
+            .resizedPreviewFrame {border:solid 1px goldenrod;}
+            .widthheight {display:flex;}
+            .resize_width input, .resize_height input {width:60px; text-align:center;}
+            .resize button {width:80px; height:30px; margin-top:10px; border-radius:9; background:azure;}
+            .resize, .clearFile {border:solid 1px lightgray; padding:15px; margin:10px; width:200px; height:120px;} 
+            .resized, .clearFile {display:none;}
+            .clearFile button {height:50px; margin-top:15px;}
         </style>
         
-        
-        <section class="imageResizer">
-            <input type="file" onchange="previewFile()" class="file" name="file"/>
-        </section>
-        
-        <section class="info">
-            <img src="" height="250" class="preview" alt="image preview...">
-            <div class="fileInfo">
-                <span><b>file Info</b></span>
-                <div class="filename"></div>
-                <div class="filesize"></div>
-                <div class="originalsize"></div>
-                <div class="filetype"></div>
-            </div>
-        </section>
+        <section class="overall">
+            <section class="imageResizer">
+                <input type="file" onchange="previewFile()" class="file" name="file"/>
+            </section>
 
-        <section class="resize">
-            <div>
-                <span>width</span>
-                <input type="number" name="re_width">
-            </div>
-            <div>
-                <span>height</span>
-                <input type="number" name="re_height">
-            </div>
-            <button class="re" onclick="resizeFile()">resize</button>
-        </section>
+            <section class="previews">
+                <section class="original">
+                    <div class="previewFrame">
+                        <a  href="#" onClick="displayImg(this)">
+                            <img src="" class="preview" width="250" height="300" alt="upload an image">
+                        </a>
+                    </div>
+                    <div class="fileInfo">
+                        <span><b>original file Info</b></span>
+                        <div class="filename"></div>
+                        <div class="originalsize"></div>
+                        <div class="filesize"></div>
+                        <div class="filetype"></div>
+                    </div>
+                    <div class="resize">
+                        <div class="widthHeight">
+                            <div class="resize_width">
+                                <span>width</span>
+                                <input type="number" name="re_width" required>px
+                            </div>
+                            <div class="resize_height">
+                                <span>height</span>
+                                <input type="number" name="re_height" required>px
+                            </div>
+                        </div>
+                        <div class="resizePreset">
+                            <button onclick="resizePresetCal('0.5')">50%</button>
+                            <button onclick="resizePresetCal('0.25')">25%</button>
+                            <button onclick="resizePresetCal('0.1')">10%</button>
+                        </div>
+                        <button class="upload" onclick="uploadFile()">upload</button>
+                        <button class="re" onclick="resize()">resize</button>
+                    </div>
+                </section>
 
-        <section class="resized">
-            <img src="" class="resizedImgPreview">
-            <div class="resizedfileInfo">
-                <span><b>resized - file Info</b></span>
-                <div class="resizedfilename"></div>
-                <div class="resizedfilesize"></div>
-                <div class="resizedsize"></div>
-                <div class="resizedfiletype"></div>
-            </div>
-        </section>
+                <section class="resized">
+                    <div class="resizedPreviewFrame">
+                        <img src="" class="resizedImgPreview">
+                    </div>
+                    <div class="resizedfileInfo">
+                        <span><b>resized file Info</b></span>
+                        <div class="resizedfilename"></div>
+                        <div class="resizedfilesize"></div>
+                        <div class="resizedsize"></div>
+                        <div class="resizedfiletype"></div>
+                    </div>
+                    <div class="clearFile" >
+                        <button onclick="clearFileOnServer()">delete file from server</button>
+                        <span class="deleteMsg"></span>
+                    </div>
+                </section>
+            </section>
 
+        </section>
 
         <script>
+
+
+            function resize(){
+                var rewidth = document.getElementsByName('re_width')[0].value
+                var reheight = document.getElementsByName('re_height')[0].value
+                if(document.querySelector('input[type=file]').files[0]){
+                    if(rewidth=='' || reheight=='' || rewidth=='0' || reheight=='0'){
+                        alert('올바른 값을 입력해 주세요')
+                    }else{
+                        resizeFile()
+                        document.getElementsByClassName('overall')[0].style.width=600                    }
+                }
+            }
+
+            
+            async function uploadFile(){
+                if(document.querySelector('input[type=file]').files[0]){
+                    var file    = document.querySelector('input[type=file]').files[0];
+                    var formData = new FormData()
+                    formData.append('file', file)
+                    result = await axios.post('//localhost:3000/upload', formData)
+                    console.log(result.data.result)
+                }
+            }
+
+        
             function previewFile() {
-                var preview = document.querySelector('.info img');
+                var preview = document.querySelector('.original img');
                 var file    = document.querySelector('input[type=file]').files[0];
                 var filename = file.name
                 var filesize = Math.ceil(file.size/1024) + 'kb'
@@ -63,7 +120,7 @@
                 }
                 if(file){
                     reader.readAsDataURL(file);
-                } else {
+                }else{
                     preview.src = "";
                 }
                 setTimeout(()=>{
@@ -72,15 +129,26 @@
                 },100)
             }
 
+
             function getSize(){
-                var preview = document.querySelector('.info img');
+                var preview = document.querySelector('.original img');
                 var oWidth = preview.naturalWidth
                 var oHeight = preview.naturalHeight
                 var originalsize = oWidth + ' x ' + oHeight
                 document.querySelector('.originalsize').innerText = originalsize
             }
 
-            async function resizeFile(){
+
+            function resizePresetCal(ratio){
+                var original = document.querySelector('.originalsize').innerText
+                var rewidth  = Math.floor(Number(original.split(' x ')[0]) * Number(ratio));
+                var reheight = Math.floor(Number(original.split(' x ')[1]) * Number(ratio));
+                document.getElementsByName('re_width')[0].value = rewidth;
+                document.getElementsByName('re_height')[0].value = reheight
+            }
+
+            
+            async function resizeFile(args){
                 var rewidth = document.getElementsByName('re_width')[0].value
                 var reheight = document.getElementsByName('re_height')[0].value
                 var file    = document.querySelector('input[type=file]').files[0];
@@ -91,19 +159,43 @@
                 var result = await axios.post('//localhost:3000/resize', formData)
                 var workResult = result.data.data
                 var newPath = result.data.path
-
+                var newName = result.data.name
+                
                 setTimeout(()=>{
                     $('.resizedImgPreview')[0].src = '//localhost:3000/' + newPath
+                    document.querySelector('.resizedfilename').innerText = newName
                     document.querySelector('.resizedfilesize').innerText = workResult.width + ' x ' + workResult.height
                     document.querySelector('.resizedfiletype').innerText = workResult.format
                     document.querySelector('.resizedsize').innerText = Math.ceil(workResult.size/1024) +'kb'
-                    $('.resizedfileInfo').show()
+                    $('.resized, .resizedFileInfo, .clearFile').show()
                 },100)
-            
             }
 
- 
 
+            function displayImg(element){
+                var newTab = window.open()
+                var data = document.getElementsByClassName('preview')[0].getAttribute('src')
+                setTimeout(() =>{
+                    newTab.document.body.innerHTML = "<img src='" + data + "'>";
+                }, 50);
+                return false;
+            }
+
+            
+            async function clearFileOnServer(){
+                const path = $('.resizedImgPreview')[0].src
+                const filePath = path.split('http://localhost:3000/')[1]
+                const result = await axios.post('//localhost:3000/clearFile',{filePath:filePath})
+                if(result.data.result){
+                    document.getElementsByClassName('deleteMsg')[0].textContent = result.data.result
+                    $('.resizedImgPreview')[0].src = ''
+                    document.querySelector('.resizedfilename').innerText = ''
+                    document.querySelector('.resizedfilesize').innerText = ''
+                    document.querySelector('.resizedfiletype').innerText = ''
+                    document.querySelector('.resizedsize').innerText = ''
+                    $('.clearFile').hide();
+                }
+            }
         </script>
     </body>
 </html>
