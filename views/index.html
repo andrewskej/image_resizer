@@ -16,7 +16,7 @@
             .widthheight input {width:60px; text-align:center;}
             .nameType input {width:180px; text-align:center;}
             .resize button {width:80px; height:30px; margin-top:10px; border-radius:9; background:azure;}
-            .resize, .clearFile {border:solid 1px lightgray; padding:15px; margin:10px; width:200px; height:180px;} 
+            .resize, .clearFile {border:solid 1px lightgray; padding:15px; margin:10px; width:200px; height:200px;} 
             .resized, .clearFile {display:none;}
             .clearFile button {height:50px; margin-top:15px;}
         </style>
@@ -63,10 +63,12 @@
                             </div>
                         </div>
  
+                        <input type="range" class="resizeRangeBar" name="resizeRangeBar" min="1" max="200" onchange="resizeRange(this.value)">
+                        <span class="rangeNo"></span>
                         <div class="resizePreset">
-                            <button onclick="resizePresetCal('0.5')">50%</button>
-                            <button onclick="resizePresetCal('0.25')">25%</button>
                             <button onclick="resizePresetCal('0.1')">10%</button>
+                            <button onclick="resizePresetCal('0.25')">25%</button>
+                            <button onclick="resizePresetCal('0.5')">50%</button>
                         </div>
                         <button class="upload" onclick="uploadFile()">upload</button>
                         <button class="re" onclick="resize()">resize</button>
@@ -111,7 +113,8 @@
                 }
             }
 
-            
+
+
             async function uploadFile(){
                 if(document.querySelector('input[type=file]').files[0]){
                     var file    = document.querySelector('input[type=file]').files[0];
@@ -158,6 +161,11 @@
                 document.querySelector('.originalsize').innerText = originalsize
             }
 
+            function resizeRange(range){
+                console.log(range)
+                resizePresetCal(Number(range/100))
+                document.getElementsByClassName('rangeNo')[0].innerText = range + '%'
+            }
 
             function resizePresetCal(ratio){
                 var original = document.querySelector('.originalsize').innerText
