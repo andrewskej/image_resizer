@@ -8,6 +8,7 @@
             .original, .resized {text-align:center; border:solid 1px lightgray; padding:15px; margin:10px; width:250px;} 
             .previews, .resizePreset {display:flex;}
             .previewFrame, .resizedPreviewFrame {border:solid 1px black; width:250px; height:250px; display:flex; justify-content:center; align-items:center; }
+            .previewFrame.highlight {border-color:goldenrod;}
             .previewFrame img, .resizedPreviewFrame img {margin-left:auto; margin-right:auto; max-width:250px; max-height:250px; }
             .file{margin-left:10px;}
             .fileInfo, .resizedfileInfo {padding:5%; border:solid 1px lightgray; width:225px; display:none;}
@@ -16,7 +17,7 @@
             .widthheight input {width:60px; text-align:center;}
             .nameType input {width:180px; text-align:center;}
             .resize button {width:80px; height:30px; margin-top:10px; border-radius:9; background:azure;}
-            .resize, .clearFile {border:solid 1px lightgray; padding:15px; margin:10px; width:200px; height:200px;} 
+            .resize, .clearFile {border:solid 1px lightgray; padding:15px; margin:10px; width:200px; height:210px;} 
             .resized, .clearFile {display:none;}
             .clearFile button {height:50px; margin-top:15px;}
         </style>
@@ -29,8 +30,8 @@
             <section class="previews">
                 <section class="original">
                     <div class="previewFrame">
-                        <a href="#" onClick="displayImg(this)">
-                            <img src="//localhost:3000/uploads/default/pic_placeholder.png" class="preview" alt="upload an image" >
+                        <a href="#" onClick="displayImgNewTab(this)">
+                            <img src="//localhost:3001/uploads/default/pic_placeholder.png" class="preview" alt="upload an image" >
                         </a>
                     </div>
                     <div class="fileInfo">
@@ -43,23 +44,15 @@
                     <div class="resize">
                         <div class="nameType">
                             <input type="text" class="resize_name" name="re_name" placeholder="filename">
-                            <!-- <select class="resize_type" name="re_type">
-                                <option>JPEG</option>
-                                <option>PNG</option>
-                                <option>WebP</option>
-                                <option>GIF</option>
-                                <option>SVG</option>
-                                <option>TIFF</option>
-                            </select> -->
                         </div>
                         <div class="widthHeight">
                             <div class="resize_width">
                                 <span>Width</span>
-                                <input type="number" name="re_width" required>px
+                                <input type="number" name="re_width" required> px
                             </div>
                             <div class="resize_height">
                                 <span>Height</span>
-                                <input type="number" name="re_height" required>px
+                                <input type="number" name="re_height" required> px
                             </div>
                         </div>
  
@@ -99,7 +92,7 @@
         </section>
 
         <script>
-            var globalPath = '//localhost:3000/'
+            var globalPath = '//localhost:3001/'
 
             function resize(){
                 var rewidth = document.getElementsByName('re_width')[0].value
@@ -113,24 +106,35 @@
                 }
             }
 
-
-
-            async function uploadFile(){
+            async function uploadFile(dragAndDrop){
                 if(document.querySelector('input[type=file]').files[0]){
-                    var file    = document.querySelector('input[type=file]').files[0];
+                    var file = document.querySelector('input[type=file]').files[0];
+                }else{
+                    var file = dragAndDrop
+                }
+                if(file){
                     var formData = new FormData()
                     formData.append('file', file)
                     result = await axios.post(globalPath+'upload', formData)
                     document.getElementsByClassName('uploadMsg')[0].innerText = result.data.result
+                }else{
+                    document.getElementsByClassName('uploadMsg')[0].innerText = '\n no file'
                 }
             }
 
-        
-            function previewFile() {
+
+
+
+            function previewFile(dragAndDrop) {
+                var file;
+                if(!dragAndDrop){
+                    file = document.querySelector('input[type=file]').files[0];
+                }else{
+                    file = dragAndDrop
+                }
                 var preview = document.querySelector('.original img');
-                var file    = document.querySelector('input[type=file]').files[0];
-                var filename = file.name
                 var filesize = Math.ceil(file.size/1024) + 'kb'
+                var filename = file.name
                 var filetype = file.type
                 var reader  = new FileReader();
                 reader.onloadend = function () {
@@ -148,9 +152,10 @@
                     getSize()
                     $('.fileInfo').show()
                     document.getElementsByClassName('resize_name')[0].placeholder = 'resized_' + filename
-                    // document.getElementsByClassName('resize_type')[0].value = filetype.split('/')[1]
                 },100)
             }
+
+            //----------------------
 
 
             function getSize(){
@@ -159,10 +164,11 @@
                 var oHeight = preview.naturalHeight
                 var originalsize = oWidth + ' x ' + oHeight
                 document.querySelector('.originalsize').innerText = originalsize
+                document.getElementsByName('re_width')[0].value = oWidth
+                document.getElementsByName('re_height')[0].value = oHeight
             }
 
             function resizeRange(range){
-                console.log(range)
                 resizePresetCal(Number(range/100))
                 document.getElementsByClassName('rangeNo')[0].innerText = range + '%'
             }
@@ -175,21 +181,16 @@
                 document.getElementsByName('re_height')[0].value = reheight
             }
 
-
-            async function resizeFile(args){
+            async function resizeFile(){
                 var rewidth = document.getElementsByName('re_width')[0].value
                 var reheight = document.getElementsByName('re_height')[0].value
                 var rename = document.getElementsByName('re_name')[0].value || document.getElementsByName('re_name')[0].placeholder
-                // var retype = document.getElementsByName('re_type')[0].value
                 var file    = document.querySelector('input[type=file]').files[0];
                 var formData = new FormData()
                     formData.append('file', file)
                     formData.append('rewidth', rewidth)
                     formData.append('reheight', reheight)
                     formData.append('rename', rename)
-                    //wip
-                    // formData.append('retype', retype)  
-
                 var result = await axios.post(globalPath+'resize', formData)
                 if(result.status == 200){
                     document.getElementsByClassName('uploadMsg')[0].innerText = 'resize complete'
@@ -209,8 +210,7 @@
                 },100)
             }
 
-
-            function displayImg(element){
+            function displayImgNewTab(element){
                 var newTab = window.open()
                 var data = document.getElementsByClassName('preview')[0].getAttribute('src')
                 setTimeout(() =>{
@@ -218,7 +218,6 @@
                 }, 50);
                 return false;
             }
-
             
             async function clearFileOnServer(){
                 const path = $('.resizedImgPreview')[0].src
@@ -233,6 +232,38 @@
                     document.querySelector('.resizedsize').innerText = ''
                     $('.clearFile').hide();
                 }
+            }
+           
+            var dropArea = document.getElementsByClassName('previewFrame')[0]
+                dropArea.addEventListener('dragenter', preventDefaults, false)
+                dropArea.addEventListener('dragenter', highlight, false)
+                dropArea.addEventListener('dragover', preventDefaults, false)
+                dropArea.addEventListener('dragover', highlight, false)
+                dropArea.addEventListener('dragleave', preventDefaults, false)
+                dropArea.addEventListener('dragleave', unhighlight, false)
+                dropArea.addEventListener('drop', preventDefaults, false)
+                dropArea.addEventListener('drop', unhighlight, false)
+                dropArea.addEventListener('drop', imageDrop, false)
+
+            function preventDefaults(e){
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            function highlight(e){
+                dropArea.classList.add('highlight')
+            }
+
+            function unhighlight(e){
+                dropArea.classList.remove('highlight')
+            }
+
+            function imageDrop(e){
+                var dt = e.dataTransfer;
+                var files = dt.files;
+                var fileInput = document.querySelector('input[type=file]')
+                fileInput.files = files;
+                previewFile(files[0])
             }
         </script>
     </body>

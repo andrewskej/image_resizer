@@ -17,7 +17,7 @@ const indexRouter = require('./routes/index')
 app.use('/', indexRouter)
 app.use('/uploads', express.static('uploads')) //For image uploads
 
-http.Server(app).listen(port = 3000, () => {
+http.Server(app).listen(port = 3001, () => {
     console.log('Server listening on *:' + port)
 });
 
