@@ -16,10 +16,11 @@
             .widthheight, .nameType {display:flex; margin-bottom:15px; justify-content:space-around;}
             .widthheight input {width:60px; text-align:center;}
             .nameType input {width:180px; text-align:center;}
+            .upload, .resizeRun {font-size:10.5px;}
             .resize button {width:80px; height:30px; margin-top:10px; border-radius:9; background:azure;}
             .resize, .clearFile {border:solid 1px lightgray; padding:15px; margin:10px; width:200px; height:210px;} 
             .resized, .clearFile {display:none;}
-            .clearFile button {height:50px; margin-top:15px;}
+            .clearFile button {height:50px; margin-top:75px; background:orangered; border:solid 1px orangered; color:white; font-weight:bold;}
         </style>
         
         <section class="overall">
@@ -56,15 +57,16 @@
                             </div>
                         </div>
  
-                        <input type="range" class="resizeRangeBar" name="resizeRangeBar" min="1" max="200" onchange="resizeRange(this.value)">
+                        <input type="range" class="resizeRangeBar" name="resizeRangeBar" min="1" max="200" onchange="resizeRangeSet(this.value)">
                         <span class="rangeNo"></span>
                         <div class="resizePreset">
-                            <button onclick="resizePresetCal('0.1')">10%</button>
-                            <button onclick="resizePresetCal('0.25')">25%</button>
-                            <button onclick="resizePresetCal('0.5')">50%</button>
+                            <button onclick="resizeRangeSet('10')">10%</button>
+                            <button onclick="resizeRangeSet('25')">25%</button>
+                            <button onclick="resizeRangeSet('50')">50%</button>
+                            <button onclick="resizeRangeSet('75')">75%</button>
                         </div>
-                        <button class="upload" onclick="uploadFile()">upload</button>
-                        <button class="re" onclick="resize()">resize</button>
+                        <button class="upload" onclick="uploadFile()">upload(100%)</button>
+                        <button class="resizeRun" onclick="resize()">resize & up</button>
                         <span class="uploadMsg"></span>
                     </div>
                 </section>
@@ -72,7 +74,7 @@
                 <section class="resized">
                     <div class="resizedPreviewFrame">
                         <a target="_blank" href="">
-                            <img src="" maxwidth="250" maxheight="250" class="resizedImgPreview">
+                            <img src="//localhost:3001/uploads/default/pic_placeholder.png" maxwidth="250" maxheight="250" class="resizedImgPreview">
                         </a>
                     </div>
                     <div class="resizedfileInfo">
@@ -84,7 +86,6 @@
                     </div>
                     <div class="clearFile" >
                         <button onclick="clearFileOnServer()">delete file from server</button>
-                        <span class="deleteMsg"></span>
                     </div>
                 </section>
             </section>
@@ -102,30 +103,12 @@
                         alert('올바른 값을 입력해 주세요')
                     }else{
                         resizeFile()
-                        document.getElementsByClassName('overall')[0].style.width=600                    }
-                }
-            }
-
-            async function uploadFile(dragAndDrop){
-                if(document.querySelector('input[type=file]').files[0]){
-                    var file = document.querySelector('input[type=file]').files[0];
-                }else{
-                    var file = dragAndDrop
-                }
-                if(file){
-                    var formData = new FormData()
-                    formData.append('file', file)
-                    result = await axios.post(globalPath+'upload', formData)
-                    document.getElementsByClassName('uploadMsg')[0].innerText = result.data.result
-                }else{
-                    document.getElementsByClassName('uploadMsg')[0].innerText = '\n no file'
+                        document.getElementsByClassName('overall')[0].style.width=600 }
                 }
             }
 
 
-
-
-            function previewFile(dragAndDrop) {
+            function previewFile(dragAndDrop){
                 var file;
                 if(!dragAndDrop){
                     file = document.querySelector('input[type=file]').files[0];
@@ -151,11 +134,10 @@
                 setTimeout(()=>{
                     getSize()
                     $('.fileInfo').show()
+                    document.getElementsByClassName('uploadMsg')[0].innerText = ''
                     document.getElementsByClassName('resize_name')[0].placeholder = 'resized_' + filename
                 },100)
             }
-
-            //----------------------
 
 
             function getSize(){
@@ -168,18 +150,46 @@
                 document.getElementsByName('re_height')[0].value = oHeight
             }
 
-            function resizeRange(range){
-                resizePresetCal(Number(range/100))
-                document.getElementsByClassName('rangeNo')[0].innerText = range + '%'
+
+            function resizeRangeSet(range){
+                var original = document.querySelector('.originalsize').innerText
+                if(original && original!=''){
+                    var rewidth  = Math.floor(Number(original.split(' x ')[0]) * Number(range/100));
+                    var reheight = Math.floor(Number(original.split(' x ')[1]) * Number(range/100));
+                    document.getElementsByName('re_width')[0].value = rewidth;
+                    document.getElementsByName('re_height')[0].value = reheight;
+                    document.getElementsByClassName('rangeNo')[0].innerText = range + '%'
+                    document.getElementsByClassName('resizeRangeBar')[0].value = range;
+                }
+            }
+            
+
+            function displayImgNewTab(element){
+                var newTab = window.open()
+                var data = document.getElementsByClassName('preview')[0].getAttribute('src')
+                setTimeout(() =>{
+                    newTab.document.body.innerHTML = "<img src='" + data + "'>";
+                }, 50);
+                return false;
+            }
+            
+
+            async function uploadFile(dragAndDrop){
+                if(document.querySelector('input[type=file]').files[0]){
+                    var file = document.querySelector('input[type=file]').files[0];
+                }else{
+                    var file = dragAndDrop
+                }
+                if(file){
+                    var formData = new FormData()
+                    formData.append('file', file)
+                    result = await axios.post(globalPath+'upload', formData)
+                    document.getElementsByClassName('uploadMsg')[0].innerText = result.data.result
+                }else{
+                    document.getElementsByClassName('uploadMsg')[0].innerText = '\n no file'
+                }
             }
 
-            function resizePresetCal(ratio){
-                var original = document.querySelector('.originalsize').innerText
-                var rewidth  = Math.floor(Number(original.split(' x ')[0]) * Number(ratio));
-                var reheight = Math.floor(Number(original.split(' x ')[1]) * Number(ratio));
-                document.getElementsByName('re_width')[0].value = rewidth;
-                document.getElementsByName('re_height')[0].value = reheight
-            }
 
             async function resizeFile(){
                 var rewidth = document.getElementsByName('re_width')[0].value
@@ -209,23 +219,15 @@
                     $('.resized, .resizedFileInfo, .clearFile').show()
                 },100)
             }
-
-            function displayImgNewTab(element){
-                var newTab = window.open()
-                var data = document.getElementsByClassName('preview')[0].getAttribute('src')
-                setTimeout(() =>{
-                    newTab.document.body.innerHTML = "<img src='" + data + "'>";
-                }, 50);
-                return false;
-            }
             
+
             async function clearFileOnServer(){
                 const path = $('.resizedImgPreview')[0].src
                 const filePath = path.split('http:' + globalPath)[1]
                 const result = await axios.post(globalPath+'clearFile',{filePath:filePath})
                 if(result.data.result){
-                    document.getElementsByClassName('deleteMsg')[0].textContent = result.data.result
-                    $('.resizedImgPreview')[0].src = ''
+                    document.getElementsByClassName('uploadMsg')[0].innerText = result.data.result
+                    path.src = '//localhost:3001/uploads/default/pic_placeholder.png'
                     document.querySelector('.resizedfilename').innerText = ''
                     document.querySelector('.resizedfilesize').innerText = ''
                     document.querySelector('.resizedfiletype').innerText = ''
@@ -234,6 +236,7 @@
                 }
             }
            
+
             var dropArea = document.getElementsByClassName('previewFrame')[0]
                 dropArea.addEventListener('dragenter', preventDefaults, false)
                 dropArea.addEventListener('dragenter', highlight, false)
@@ -245,19 +248,23 @@
                 dropArea.addEventListener('drop', unhighlight, false)
                 dropArea.addEventListener('drop', imageDrop, false)
 
+
             function preventDefaults(e){
                 e.preventDefault();
                 e.stopPropagation();
             }
 
+
             function highlight(e){
                 dropArea.classList.add('highlight')
             }
+
 
             function unhighlight(e){
                 dropArea.classList.remove('highlight')
             }
 
+            
             function imageDrop(e){
                 var dt = e.dataTransfer;
                 var files = dt.files;
@@ -265,6 +272,7 @@
                 fileInput.files = files;
                 previewFile(files[0])
             }
+        
         </script>
     </body>
 </html>

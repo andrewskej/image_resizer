@@ -26,11 +26,10 @@ function initPage(req,res){
 }
 
 function fileUpload(req,res){
-  console.log('upload')
   const {file} = req;
+  console.log(`file upload`)
   res.send({result:'upload success'})
 }
-
 
 function fileResize(req,res){
     const {rewidth, reheight, rename, retype} = req.body
@@ -47,7 +46,7 @@ function fileResize(req,res){
         result.name = resizedFileName
         result.path = resizedFilePath
         
-        //리사이징 후 서버에서 원본 파일 삭제
+        //리사이징 후 서버에서 원본 파일 자동 삭제
         deleteFile(file.path) 
 
         res.send({result})
@@ -65,7 +64,7 @@ function deleteFile(filePath){
 }
 
 
-//명령시 로컬의 리사이즈 파일 삭제
+//요청시 로컬의 리사이즈 파일 삭제
 function clearFile(req,res){
   const {filePath} = req.body
   deleteFile(filePath)
